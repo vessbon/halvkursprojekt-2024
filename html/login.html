@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+
+    <script src="https://kit.fontawesome.com/38dba9ba5e.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body id="accountCreation">
+    <header class="ac-header">
+      <h1 class="credential-title">Login</h1>
+
+      <nav>
+        <a href="/">Home</a>
+        <a href="/register">Register</a>
+      </nav>
+    </header>
+
+    <main class="ac-main login">
+      <form class="ac-form" action="/login" method="post">
+        <label for="email">
+          <i class="fa-solid fa-envelope"></i>
+        </label>
+        <input type="email" name="email" placeholder="Email" id="email" required>
+
+        <label for="password">
+          <i class="fas fa-lock"></i>
+        </label>
+        <input type="password" name="password" placeholder="Password" id="password" required>
+
+        <input type="submit" value="Login">
+      </form>
+    </main>
+
+    <footer class="ac-footer">Copyright &copy; 2024 by Anton Norgren</footer>
+  </body>
+</html>

@@ -1,0 +1,177 @@
+/* ---------------------------------
+General CSS
+--------------------------------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  background-color: #f4f4f9;
+  color: #333;
+  line-height: 1.6;
+}
+
+header {
+  width: 100%;
+  padding: 1rem 2rem;
+  background-color: #fff;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  color: #333;
+}
+
+/* ---------------------------------
+ Home page 
+--------------------------------- */
+#homeBody {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+#mainHeader #actions a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+#mainHeader #actions svg {
+  width: 32px;
+  height: 32px;
+  fill: #007BFF;
+  transition: fill 0.3s ease;
+}
+
+#mainHeader #actions svg:hover {
+  fill: #0056b3;
+}
+
+#websiteTitle {
+  margin: 20px;
+}
+
+.home-main {
+  width: 100%;
+}
+
+.home-main .video-gallery {
+  width: 100%;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 1fr);
+  gap: 1.5rem;
+}
+
+.home-main a {
+  background: #fff;
+  padding: 1rem;
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.home-main a:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.home-main h2 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.home-main p {
+  font-size: 1rem;
+  color: #666;
+}
+
+.create-video {
+  width: 2vw;
+  margin: 20px;
+  cursor: pointer;
+}
+
+
+/* ---------------------------------
+Account Creation (Registration and Login) 
+--------------------------------- */
+#accountCreation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 100vh;
+}
+
+.ac-header nav a {
+  text-decoration: none;
+  margin-left: 1.5rem;
+  color: #007BFF;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.ac-header nav a:hover {
+  color: #0056b3;
+}
+
+.ac-main {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ac-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.ac-form label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  color: #555;
+}
+
+.ac-form input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.ac-footer {
+  margin-bottom: 10px;
+}
+
+
+/* --------------- RESPONSIVE DESIGN --------------- */
+@media (width >=750px) {
+  .home-main .video-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  }
+}
