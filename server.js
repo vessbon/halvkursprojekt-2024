@@ -1,14 +1,19 @@
 // Dependencies
-const { getCredentials, parseJSON, createUsernameFromEmail, secureUploadData, generateWatchCode } = require('./utils.js')
+const {
+    getCredentials, parseJSON, createUsernameFromEmail,
+    secureUploadData, generateWatchCode, getVideoFromWatchCode
+} = require('./utils.js')
+
 const fs = require('fs').promises;
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
 const multer = require('multer');
-const ffmpeg = require('fluent-ffmpeg');
-const ffprobe = require('ffprobe-static');
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffprobePath = require('@ffprobe-installer/ffprobe').path;
+const ffmpeg = require('fluent-ffmpeg')
 
 // Constants
 const app = express();
@@ -52,8 +57,9 @@ app.use(session({
     }
 }))
 
-// Setup ffprobe for ffmpeg (thumbnails)
-ffmpeg.setFfprobePath(ffprobe.path);
+// Setup ffmpeg
+ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfprobePath(ffprobePath);
 
 // Multer setup
 const fileStorageEngine = multer.diskStorage({
@@ -96,7 +102,8 @@ app.get('/login', login);
 app.get('/register', register);
 app.get('/channel', requireAuth, redirectToChannel);
 app.get('/channel/:uuid', requireAuth, uploadPage);
-app.get('/watch/:code')
+app.get('/watch/:code', requireAuth, videoPlayer);
+app.get('/delete/:code', requireAuth, requireAdmin, deleteVideo);
 
 app.post('/login', loginHandler);
 app.post('/register', registrationHandler);
@@ -115,22 +122,25 @@ async function index(req, res) {
 
                 if (videoExtensions.includes(fileExtension)) {
                     return `<div class="thumbnail-container">
-                            <a href="/watch/${video.watch_code}">
+                            <a class="thumbnail" href="/watch/${video.watch_code}">
                                 <img src="/${thumbnailPath}" alt="Thumbnail for the video."></img>
                             </a>
                             <p>${video.title}</p>
                             <p>Uploaded on ${new Date(video.date).toLocaleDateString('en-EN', dateOptions)} <strong>By ${video.username}</strong></p>
-                        </div>`;
+                            <a href="/delete/${video.watch_code}">
+                                <svg class="delete-btn" xmlns = "http://www.w3.org/2000/svg" viewBox = "0 0 448 512">< !--!Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path fill="currentColor" d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg>
+                            </a>
+                        </div> `;
                 } else {
-                    return `<p>Unsupported file type: ${video.filename}</p>`;
+                    return `<p> Unsupported file type: ${video.filename}</p> `;
                 }
             }).join('') // Adds upp all the video html as one string
 
             const content = `
-            <div class="video-gallery">
+                <div class="video-gallery">
                     ${videoElements || '<p>No videos uploaded yet.</p>'}
             </div>
-            `
+                `
             return res.send(await renderHtml(content));
         }
 
@@ -172,6 +182,10 @@ async function loginHandler(req, res) {
                 req.session.userId = user.userId;
                 req.session.email = user.email;
                 req.session.username = user.username;
+                if (users.find(u => u.titles.admin)) {
+                    req.session.admin = true;
+                }
+
                 res.redirect('/');
 
             } else {
@@ -208,6 +222,7 @@ async function registrationHandler(req, res) {
         credentials.password = await bcrypt.hash(credentials.password, salt);
         credentials.username = await createUsernameFromEmail(credentials.email, users);
         credentials.usernameLastChanged = false;
+        credentials.titles = {}
 
         users.push(credentials);
         await fs.writeFile('data/users.json', JSON.stringify(users, null, 4));
@@ -260,9 +275,9 @@ async function uploadSingle(req, res) {
                     count: 1,
                     folder: file.destination,
                     filename: thumbnailFilename,
-                    size: '320x240'
-                })
-        })
+                    size: '320x240',
+                });
+        });
 
         // Define JSON structure
         const newVideoEntry = {
@@ -292,6 +307,53 @@ async function uploadSingle(req, res) {
     }
 }
 
+async function videoPlayer(req, res) {
+    try {
+        const video = await getVideoFromWatchCode(req.params.code);
+        if (!video) { return res.status(404).send('<h1>Video not found</h1>'); }
+
+        const videoPath = path.join('public', video.path, video.filename);
+        const content = `
+                < div class="video-player" >
+            <video controls>
+                <source src="/${videoPath}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <h2>${video.title}</h2>
+            <p>Uploaded on ${new Date(video.date).toLocaleDateString('en-EN', dateOptions)} by <strong>${video.username}</strong></p>
+        </div >
+                `;
+
+        res.send(await renderHtml(content));
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).send('<h1>Failed to load video</h1>');
+    }
+}
+
+async function deleteVideo(req, res) {
+    try {
+        let videos = await parseJSON('data/videos.json')
+        let videoIndex = await getVideoFromWatchCode(req.params.code, 'index');
+        if (videoIndex === -1) { return res.status(404).send('<h1>Video not found</h1>'); }
+
+        const video = videos[videoIndex];
+        const videoFolder = path.join('public', video.path);
+
+        await fs.rm(videoFolder, { recursive: true, force: true });
+
+        videos.splice(videoIndex, 1);
+        await fs.writeFile('data/videos.json', JSON.stringify(videos, null, 4));
+
+        res.redirect('/');
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).send('<h1>Failed to delete video</h1>');
+    }
+}
+
 async function redirectToChannel(req, res) {
     try {
         res.redirect(`/channel/${req.session.userId}`);
@@ -306,6 +368,15 @@ function requireAuth(req, res, next) {
         next();
     } else {
         res.redirect('/login');
+    }
+}
+
+function requireAdmin(req, res, next) {
+    if (req.session.admin) {
+        next();
+    }
+    else {
+        res.send({ message: 'Unauthorized' })
     }
 }
 

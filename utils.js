@@ -74,4 +74,17 @@ async function randomCharsFromString(text, num) {
     return result;
 }
 
-module.exports = { getCredentials, parseJSON, createUsernameFromEmail, secureUploadData, generateWatchCode };
+async function getVideoFromWatchCode(watchCode, type = 'json') {
+    let videos = await parseJSON('data/videos.json');
+    let result;
+
+    if (type == 'json') {
+        result = await videos.find(v => v.watch_code === watchCode);
+    } else if (type == 'index') {
+        result = await videos.findIndex(v => v.watch_code === watchCode);
+    }
+
+    return result;
+}
+
+module.exports = { getCredentials, parseJSON, createUsernameFromEmail, secureUploadData, generateWatchCode, getVideoFromWatchCode };

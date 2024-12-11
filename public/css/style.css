@@ -74,7 +74,7 @@ header h1 {
   gap: 1.5rem;
 }
 
-.home-main a {
+.home-main .thumbnail {
   background: #fff;
   padding: 1rem;
   width: 100%;
@@ -88,7 +88,7 @@ header h1 {
   cursor: pointer;
 }
 
-.home-main a:hover {
+.home-main .thumbnail:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
 }
@@ -108,6 +108,19 @@ header h1 {
   width: 2vw;
   margin: 20px;
   cursor: pointer;
+}
+
+.thumbnail-container {
+  position: relative;
+}
+
+.delete-btn {
+  width: 5%;
+  cursor: pointer;
+  color: red;
+  position: absolute;
+  right: 25px;
+  bottom: 100px;
 }
 
 
@@ -167,6 +180,11 @@ Account Creation (Registration and Login)
 .ac-footer {
   margin-bottom: 10px;
 }
+
+/* ---------------------------------
+Video Player
+--------------------------------- */
+
 
 
 /* --------------- RESPONSIVE DESIGN --------------- */
