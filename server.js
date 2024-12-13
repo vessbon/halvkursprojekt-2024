@@ -13,7 +13,7 @@ const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffprobePath = require('@ffprobe-installer/ffprobe').path;
-const ffmpeg = require('fluent-ffmpeg')
+const ffmpeg = require('fluent-ffmpeg');
 
 // Constants
 const app = express();
@@ -103,7 +103,7 @@ app.get('/register', register);
 app.get('/channel', requireAuth, redirectToChannel);
 app.get('/channel/:uuid', requireAuth, uploadPage);
 app.get('/watch/:code', requireAuth, videoPlayer);
-app.get('/delete/:code', requireAuth, requireAdmin, deleteVideo);
+app.get('/delete/:code', requireAuth, deleteVideo);
 
 app.post('/login', loginHandler);
 app.post('/register', registrationHandler);
@@ -312,9 +312,9 @@ async function videoPlayer(req, res) {
         const video = await getVideoFromWatchCode(req.params.code);
         if (!video) { return res.status(404).send('<h1>Video not found</h1>'); }
 
-        const videoPath = path.join('public', video.path, video.filename);
+        const videoPath = path.join(video.path, video.filename).replace(/\\/g, '/');
         const content = `
-                < div class="video-player" >
+                <div class="video-player">
             <video controls>
                 <source src="/${videoPath}" type="video/mp4">
                 Your browser does not support the video tag.
@@ -339,14 +339,19 @@ async function deleteVideo(req, res) {
         if (videoIndex === -1) { return res.status(404).send('<h1>Video not found</h1>'); }
 
         const video = videos[videoIndex];
-        const videoFolder = path.join('public', video.path);
 
-        await fs.rm(videoFolder, { recursive: true, force: true });
+        // Make sure user is authorized (admin or owner)
+        if (req.session.userId == video.id || req.session.admin) {
+            const videoFolder = path.join('public', video.path);
+            await fs.rm(videoFolder, { recursive: true, force: true });
 
-        videos.splice(videoIndex, 1);
-        await fs.writeFile('data/videos.json', JSON.stringify(videos, null, 4));
+            videos.splice(videoIndex, 1);
+            await fs.writeFile('data/videos.json', JSON.stringify(videos, null, 4));
 
-        res.redirect('/');
+            res.redirect('/');
+        } else {
+            res.send({ message: 'Unauthorized' })
+        }
 
     } catch (err) {
         console.log(err);
